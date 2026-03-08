@@ -24,9 +24,10 @@ func (r *memoryUserRepository) Create(u *domain.User) error {
 }
 
 func (r *memoryUserRepository) GetByMail(mail string) (*domain.User, error) {
-	if mail == "" {
-		return nil, fmt.Errorf("Bos Mail Gonderme")
-	}
+	// Burası Logic içermemeli !!
+	//if mail == "" {
+	//	return nil, fmt.Errorf("Bos Mail Gonderme")
+	//}
 
 	u, exists := r.users[mail]
 

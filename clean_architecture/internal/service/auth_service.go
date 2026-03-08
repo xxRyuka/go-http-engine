@@ -20,9 +20,10 @@ func NewAuthService(userRepo domain.UserRepository) *authService {
 
 func (as *authService) Register(email string, password string) error {
 
-	mail, err := as.repo.GetByMail(email)
-	if err != nil {
-		return fmt.Errorf("Bu E-Posta Adresine Sahip {%v} Kullanıcı Mevcut ", mail)
+	userEx, err := as.repo.GetByMail(email)
+	if userEx != nil {
+
+		return fmt.Errorf("Bu E-Posta Adresine Sahip {%v} Kullanıcı Mevcut, err : %v ", userEx.ID, err)
 	}
 
 	user := domain.User{
