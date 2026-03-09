@@ -1,0 +1,19 @@
+﻿version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:15.15
+    container_name: clean_arch_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: clean_arch_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+
+volumes:
+  pgdata:

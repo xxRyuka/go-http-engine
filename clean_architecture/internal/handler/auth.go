@@ -74,8 +74,8 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	//w.Header().Set("Content-Type", "application/json")
+	//w.WriteHeader(http.StatusCreated)
 	resp := LoginResponse{
 		Token:   fmt.Sprintf("Dumenden-Token-%v", req.Email),
 		Message: "Basariyla Kayit Olundu",
@@ -124,9 +124,9 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
+	//w.Header().Set("Content-Type", "application/json")
 
-	w.WriteHeader(http.StatusOK)
+	//w.WriteHeader(http.StatusOK)
 	resp := LoginResponse{
 		Token:   token,
 		Message: "Basariyla Giris Yapıldı",

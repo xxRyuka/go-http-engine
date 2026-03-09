@@ -5,6 +5,7 @@ import (
 	"clean_architecture/internal/middleware"
 	"clean_architecture/internal/repository"
 	"clean_architecture/internal/service"
+	"clean_architecture/pkg/database"
 	"fmt"
 	"net/http"
 	"time"
@@ -12,17 +13,22 @@ import (
 	validator2 "github.com/go-playground/validator"
 )
 
-//var myValidator *validator2.Validate
-//
-//func initValidator() {
-//	myValidator = validator2.New()
-//}
-
 func main() {
+
+	// URL based connection string
+	dataSourceName := "postgres://root:secretpassword@localhost:5432/clean_arch_db?sslmode=disable"
+	connection, err := database.NewPostgresConnection("pgx", dataSourceName)
+	if err != nil {
+		panic(err)
+		return
+	}
+	defer connection.Close()
+	fmt.Println("Veritabani Havuzu Basariyla Kuruldu!")
 	app := handler.Application{AppName: "clean-architecture"}
 
-	userRepo := repository.NewMemoryUserRepository()
-	authService := service.NewAuthService(userRepo)
+	//userRepo := repository.NewMemoryUserRepository()
+	pgUserRepo := repository.NewPostgresUserRepository(connection)
+	authService := service.NewAuthService(pgUserRepo)
 
 	myValidator := validator2.New()
 	authHandler := handler.NewAuthHandler(authService, myValidator)
@@ -40,7 +46,7 @@ func main() {
 	}
 	fmt.Println("Server Up")
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		fmt.Printf("Server DOWN sebebi : %v\n", err)
 		return
