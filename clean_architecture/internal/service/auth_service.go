@@ -2,6 +2,7 @@ package service
 
 import (
 	"clean_architecture/internal/domain"
+	"clean_architecture/pkg/security"
 	"errors"
 	"fmt"
 	"time"
@@ -21,20 +22,18 @@ func NewAuthService(userRepo domain.UserRepository) *authService {
 
 func (as *authService) Register(email string, password string) error {
 
-	//userEx, err := as.repo.GetByMail(email)
-	//if userEx != nil {
-	//
-	//	return fmt.Errorf("Bu E-Posta Adresine Sahip {%v} Kullanıcı Mevcut, err : %v ", userEx.ID, err)
-	//}
-
+	hashed, err := security.HashPassword(password)
+	if err != nil {
+		return err
+	}
 	user := domain.User{
 		//ID:        len(as.repo.), // idsi nasıl olacak :D => Repo katmanı ayarliyo
 		Email:     email,
-		Password:  fmt.Sprintf("%v-hashed", password),
+		Password:  hashed,
 		CreatedAt: time.Now(),
 	}
 
-	err := as.repo.Create(&user)
+	err = as.repo.Create(&user)
 	if err != nil {
 		return err
 	}
@@ -44,17 +43,17 @@ func (as *authService) Register(email string, password string) error {
 }
 
 func (as *authService) Login(email string, password string) (string, error) { // ilerde JWT Token donecek
+
 	user, err := as.repo.GetByMail(email)
 
-	// Bu yaklasım yanlıs mı ?
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			return "", domain.ErrInvalidCredentials
 		}
-		return "", err
+		return "", fmt.Errorf("Beklenmeyen Hata err: %w", err)
 	}
 
-	if user.Password != fmt.Sprintf("%v-hashed", password) {
+	if !security.CheckPasswordHash(password, user.Password) {
 		return "", domain.ErrInvalidCredentials
 	}
 	return "dümenden-Jwt-Simdilik-" + user.Email, nil
