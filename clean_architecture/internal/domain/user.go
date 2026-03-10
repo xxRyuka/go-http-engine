@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type User struct {
 	ID        int
@@ -8,6 +11,9 @@ type User struct {
 	Password  string // hash
 	CreatedAt time.Time
 }
+
+var ErrEmailAlreadyExists error = errors.New("bu eposta kullanımda")
+var ErrInvalidCredentials error = errors.New("kullanici veya adi sifre yanlıs")
 
 type UserRepository interface {
 	Create(u *User) error

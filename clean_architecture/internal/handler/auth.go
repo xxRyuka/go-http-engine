@@ -4,6 +4,7 @@ import (
 	"clean_architecture/internal/domain"
 	"clean_architecture/pkg/response"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -69,6 +70,11 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = h.svc.Register(req.Email, req.Password)
 	if err != nil {
+		if errors.Is(err, domain.ErrEmailAlreadyExists) {
+			// HTTP 409 Conflict dönüyoruz. Veritabanı detayı (SQLSTATE vs.) ASLA sızdırılmaz.
+			response.Error(w, http.StatusConflict, "Bu e-posta adresi zaten kullanimda.")
+			return // Kodun çalışmasını burada kes!
+		}
 		//http.Error(w, fmt.Sprintf("hata : %v", err), http.StatusNotFound)
 		response.Error(w, http.StatusBadRequest, fmt.Sprintf("register hatasi,err : %v", err))
 
@@ -87,51 +93,37 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	//if r.Method != http.MethodPost {
-	//	response.Error(w, 405, "Gecersiz Method")
-	//
-	//	//http.Error(w, "Meth Not Allowed", http.StatusMethodNotAllowed)
-	//	return
-	//}
 	var req LoginRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "Json Formati Hatali")
-		//http.Error(w, "Json Formatı Hatalı", http.StatusBadRequest)
 		return
 	}
-
-	////Bunu 2 kere Yazdik bu büyük bir sorun her zaman verilerin doluluğunu boslugunu boyle kontrol edemeyiz ve bazen bazıl alanların zorunlu olması bazılarının opsiyonel olması gerekiyor
-	//if req.Email == "" || req.Password == "" {
-	//	http.Error(w, "Düzgün Veri Gonder Yorma Beni", http.StatusBadRequest)
-	//
-	//}
 
 	err = h.validator.Struct(req)
 	if err != nil {
 		// Not: Burada ham hatayı dönüyoruz, ancak production'da bu hatalar
 		// formatlanıp (translator ile) kullanıcı dostu JSON'a çevrilmelidir.
 		response.Error(w, http.StatusBadRequest, fmt.Sprintf("err : %v", err.Error()))
-		//http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	token, err := h.svc.Login(req.Email, req.Password)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, fmt.Sprintf("err : %v", err.Error()))
+		if errors.Is(err, domain.ErrInvalidCredentials) {
+			response.Error(w, http.StatusBadRequest, fmt.Sprintf("Gecersiz Kullanici Adi Sifre"))
+			return
 
-		//http.Error(w, fmt.Sprintf("hata : %v", err), http.StatusNotFound)
+		}
+		response.Error(w, http.StatusBadRequest, fmt.Sprintf("err : %v", err.Error()))
 
 		return
 	}
-	//w.Header().Set("Content-Type", "application/json")
 
-	//w.WriteHeader(http.StatusOK)
 	resp := LoginResponse{
 		Token:   token,
 		Message: "Basariyla Giris Yapıldı",
 	}
 
 	response.Json(w, http.StatusOK, resp)
-	//json.NewEncoder(w).Encode(resp)
 }
