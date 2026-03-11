@@ -2,11 +2,13 @@ package handler
 
 import (
 	"clean_architecture/internal/domain"
+	"clean_architecture/internal/middleware"
 	"clean_architecture/pkg/response"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	validator2 "github.com/go-playground/validator"
 )
@@ -25,6 +27,11 @@ type LoginResponse struct {
 	Token   string `json:"token,omitempty"`
 	Message string `json:"message,omitempty"`
 }
+
+//type GetProfileResponse struct {
+//
+//}
+
 type AuthHandler struct {
 	svc       domain.AuthService
 	validator *validator2.Validate
@@ -126,4 +133,21 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Json(w, http.StatusOK, resp)
+}
+
+func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	val := r.Context().Value(middleware.UserIDKey)
+	stringVal, ok := val.(string)
+	if !ok {
+		response.Error(w, 500, "Sunucu hatası: Context icinde UserID bulunamadi")
+		return
+	}
+	id, err := strconv.Atoi(stringVal)
+	if err != nil {
+		response.Error(w, 400, "Gecersiz id formati")
+
+		return
+	}
+
+	response.Json(w, 200, id)
 }

@@ -56,5 +56,10 @@ func (as *authService) Login(email string, password string) (string, error) { //
 	if !security.CheckPasswordHash(password, user.Password) {
 		return "", domain.ErrInvalidCredentials
 	}
-	return "dümenden-Jwt-Simdilik-" + user.Email, nil
+
+	token, err := security.GenerateToken(user)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
